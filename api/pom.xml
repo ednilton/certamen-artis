@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.certamen</groupId>
-	<artifactId>artis</artifactId>
+	<artifactId>api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>artis</name>
 	<description>API de recebimento e processamento de eventos da fábrica</description>
