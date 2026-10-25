@@ -34,9 +34,8 @@ public class QualityHandler implements EventHandler {
     public void handle(Event event) {
         log.info("Evento de QUALIDADE detectado. Gerando registro de auditoria para o ID: {}", event.getEventId());
 
-        // Monta o registro de auditoria.
-        // id → gerado pelo Hibernate (@GeneratedValue)
-        // createdAt → preenchido em UTC pelo @PrePersist da AuditLog
+        // Monta o registro de auditoria. O id quem gera é o Hibernate (@GeneratedValue)
+        // e o createdAt é preenchido em UTC pelo @PrePersist da AuditLog.
         AuditLog auditLog = AuditLog.builder()
                 .eventId(event.getEventId())
                 .action(ACTION_AUDITORIA_GERADA)

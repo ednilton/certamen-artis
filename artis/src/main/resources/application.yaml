@@ -12,9 +12,10 @@ spring:
 
   # Configuração do JPA/Hibernate
   jpa:
+    open-in-view: false # a sessão do Hibernate não fica aberta até a view; tudo é resolvido no service
     hibernate:
       ddl-auto: validate # Como usamos Flyway, o Hibernate não cria tabelas, só valida se elas existem
-    show-sql: true
+    show-sql: ${SHOW_SQL:false} # ligue com SHOW_SQL=true para depurar as queries
     properties:
       hibernate:
         format_sql: true
@@ -22,8 +23,12 @@ spring:
   # Configuração do Flyway (para rodar os scripts SQL)
   flyway:
     enabled: true
-    baseline-on-migrate: true
     validate-migration-naming: true
+
+# Origens liberadas no CORS (frontend). Separe várias por vírgula.
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 # Configuração do Swagger (OpenAPI)
 springdoc:
@@ -42,10 +47,3 @@ management:
   endpoint:
     health:
       show-details: always
-
----
-# Perfil para quando rodar dentro do Docker
-spring:
-  config:
-    activate:
-      on-profile: docker

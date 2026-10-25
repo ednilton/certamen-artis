@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.EnumMap;
@@ -25,11 +26,15 @@ import java.util.Map;
  * Aqui mora a lógica de impedir duplicidade e delegar para as regras específicas.
  *
  * @author Ednilton Rauh
+ * @email edrauh@gmail.com
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService {
+
+    /** Código SQLSTATE do PostgreSQL para violação de UNIQUE. */
+    private static final String UNIQUE_VIOLATION = "23505";
 
     private final EventRepository eventRepository;
     private final List<EventHandler> handlers;
@@ -60,7 +65,8 @@ public class EventService {
     public Event createEvent(EventRequest request) {
         log.info("Recebendo evento: {}", request.eventId());
 
-        // 1. Atalho rápido para duplicidade (a garantia real é a constraint UNIQUE no banco)
+        // 1. Checagem rápida de duplicidade. Quem garante de verdade é a constraint UNIQUE do banco,
+        //    porque duas requisições simultâneas podem passar juntas por aqui.
         if (eventRepository.existsByEventId(request.eventId())) {
             throw duplicate(request.eventId());
         }
@@ -74,12 +80,16 @@ public class EventService {
                 .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        // 3. Salva e força o INSERT agora, para capturar violação de UNIQUE aqui
+        // 3. Salva e força o INSERT na hora, pra pegar a violação de UNIQUE aqui dentro
         Event savedEvent;
         try {
             savedEvent = eventRepository.saveAndFlush(event);
         } catch (DataIntegrityViolationException ex) {
-            throw duplicate(request.eventId());
+            // Só é duplicidade se for violação de UNIQUE. Qualquer outro erro de integridade sobe normal.
+            if (isUniqueViolation(ex)) {
+                throw duplicate(request.eventId());
+            }
+            throw ex;
         }
 
         // 4. Executa a regra específica do tipo
@@ -106,5 +116,14 @@ public class EventService {
     private DuplicateEventException duplicate(String eventId) {
         log.warn("Evento duplicado detectado: {}", eventId);
         return new DuplicateEventException("O evento com ID " + eventId + " já foi processado.");
+    }
+
+    private static boolean isUniqueViolation(Throwable ex) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof SQLException sqlEx && UNIQUE_VIOLATION.equals(sqlEx.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

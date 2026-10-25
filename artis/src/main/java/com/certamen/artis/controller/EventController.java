@@ -5,14 +5,21 @@ import com.certamen.artis.dto.EventRequest;
 import com.certamen.artis.dto.EventResponse;
 import com.certamen.artis.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -38,8 +45,10 @@ public class EventController {
     @Operation(summary = "Cria um novo evento", description = "Registra o evento no banco e retorna o objeto salvo.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Evento criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos"),
-            @ApiResponse(responseCode = "409", description = "Evento duplicado (Idempotência)")
+            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos",
+                    content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))),
+            @ApiResponse(responseCode = "409", description = "Evento duplicado (Idempotência)",
+                    content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     })
     public EventResponse createEvent(@Valid @RequestBody EventRequest request) {
         Event savedEvent = eventService.createEvent(request);
