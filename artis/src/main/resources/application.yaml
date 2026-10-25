@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: artis
+
+  # Configuração do Banco de Dados (PostgreSQL)
+  datasource:
+    # As variáveis abaixo (${...}) são um fallback para quando você rodar local.
+    # Quando rodar via Docker Compose, o docker vai injetar essas variáveis automaticamente.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5434/certamen_artis}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  # Configuração do JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: validate # Como usamos Flyway, o Hibernate não cria tabelas, só valida se elas existem
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Configuração do Flyway (para rodar os scripts SQL)
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-migration-naming: true
+
+# Configuração do Swagger (OpenAPI)
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  api-docs:
+    path: /v3/api-docs
+
+# Configuração do Actuator (útil para o Healthcheck do Docker)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+---
+# Perfil para quando rodar dentro do Docker
+spring:
+  config:
+    activate:
+      on-profile: docker
