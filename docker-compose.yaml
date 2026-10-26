@@ -16,11 +16,10 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  api:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: certamen-backend
+      context: ./api
+    container_name: certamen-api
     ports:
       - "8080:8080"
     depends_on:
@@ -37,6 +36,19 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
+
+  web:
+    build:
+      context: ./web
+      args:
+        # O navegador acessa a API pela porta publicada no host
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    container_name: certamen-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:
